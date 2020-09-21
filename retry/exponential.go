@@ -54,7 +54,7 @@ func (e exponentialRetryer) Retry(f RetryableFunc) error {
 	tick := NewExponentialTicker(e.options)
 	defer tick.Stop()
 
-	return retry(f, e.duration, tick)
+	return retry(f, e.duration, tick, e.options)
 }
 
 // Tick implements the Ticker interface.

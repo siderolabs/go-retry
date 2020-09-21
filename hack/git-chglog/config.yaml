@@ -1,12 +1,12 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2020-09-01T21:13:54Z by kres ee90a80-dirty.
+# Generated on 2020-09-21T13:20:49Z by kres 7e146df-dirty.
 
 style: github
 template: CHANGELOG.tpl.md
 info:
   title: CHANGELOG
-  repository_url: https://github.com/talos-systems/talos
+  repository_url: https://github.com/talos-systems/go-retry
 options:
   commits:
     # filters:
