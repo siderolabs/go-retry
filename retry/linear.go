@@ -51,7 +51,7 @@ func (l linearRetryer) Retry(f RetryableFunc) error {
 	tick := NewLinearTicker(l.options)
 	defer tick.Stop()
 
-	return retry(f, l.duration, tick)
+	return retry(f, l.duration, tick, l.options)
 }
 
 // Tick implements the Ticker interface.

@@ -4,12 +4,15 @@
 
 package retry
 
-import "time"
+import (
+	"time"
+)
 
 // Options is the functional options struct.
 type Options struct {
-	Units  time.Duration
-	Jitter time.Duration
+	Units     time.Duration
+	Jitter    time.Duration
+	LogErrors bool
 }
 
 // Option is the functional option func.
@@ -26,6 +29,13 @@ func WithUnits(o time.Duration) Option {
 func WithJitter(o time.Duration) Option {
 	return func(args *Options) {
 		args.Jitter = o
+	}
+}
+
+// WithErrorLogging logs errors as they are encountered during the retry loop.
+func WithErrorLogging(enable bool) Option {
+	return func(args *Options) {
+		args.LogErrors = enable
 	}
 }
 

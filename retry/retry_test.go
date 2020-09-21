@@ -17,6 +17,7 @@ func Test_retry(t *testing.T) {
 		f RetryableFunc
 		d time.Duration
 		t Ticker
+		o *Options
 	}
 
 	tests := []struct {
@@ -30,6 +31,7 @@ func Test_retry(t *testing.T) {
 				f: func() error { return ExpectedError(errors.New("test")) },
 				d: 2 * time.Second,
 				t: NewConstantTicker(NewDefaultOptions()),
+				o: &Options{},
 			},
 			wantString: "2 error(s) occurred:\n\ttest\n\ttimeout",
 		},
@@ -39,6 +41,7 @@ func Test_retry(t *testing.T) {
 				f: func() error { return UnexpectedError(errors.New("test")) },
 				d: 2 * time.Second,
 				t: NewConstantTicker(NewDefaultOptions()),
+				o: &Options{},
 			},
 			wantString: "1 error(s) occurred:\n\ttest",
 		},
@@ -48,6 +51,7 @@ func Test_retry(t *testing.T) {
 				f: func() error { return nil },
 				d: 2 * time.Second,
 				t: NewConstantTicker(NewDefaultOptions()),
+				o: &Options{},
 			},
 			wantString: "",
 		},
@@ -55,7 +59,7 @@ func Test_retry(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := retry(tt.args.f, tt.args.d, tt.args.t); err != nil && tt.wantString != err.Error() {
+			if err := retry(tt.args.f, tt.args.d, tt.args.t, tt.args.o); err != nil && tt.wantString != err.Error() {
 				t.Errorf("retry() error = %q\nwant:\n%q", err, tt.wantString)
 			}
 		})

@@ -48,7 +48,7 @@ func (c constantRetryer) Retry(f RetryableFunc) error {
 	tick := NewConstantTicker(c.options)
 	defer tick.Stop()
 
-	return retry(f, c.duration, tick)
+	return retry(f, c.duration, tick, c.options)
 }
 
 // Tick implements the Ticker interface.

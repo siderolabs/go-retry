@@ -7,6 +7,7 @@ package retry
 
 import (
 	"fmt"
+	"log"
 	"math/rand"
 	"sync"
 	"time"
@@ -48,7 +49,7 @@ func (e *ErrorSet) Error() string {
 }
 
 // Append adds the error to the set if the error is not already present.
-func (e *ErrorSet) Append(err error) error {
+func (e *ErrorSet) Append(err error) bool {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 
@@ -70,7 +71,7 @@ func (e *ErrorSet) Append(err error) error {
 		e.errs = append(e.errs, err)
 	}
 
-	return e
+	return ok
 }
 
 // TimeoutError represents a timeout error.
@@ -143,42 +144,37 @@ func UnexpectedError(err error) error {
 	return unexpectedError{err}
 }
 
-func retry(f RetryableFunc, d time.Duration, t Ticker) error {
+func retry(f RetryableFunc, d time.Duration, t Ticker, o *Options) error {
 	timer := time.NewTimer(d)
 	defer timer.Stop()
 
 	errs := &ErrorSet{}
 
-	// We run the func first to avoid having to wait for the next tick.
-	if err := f(); err != nil {
-		if _, ok := err.(unexpectedError); ok {
-			return errs.Append(err)
-		}
-	} else {
-		return nil
-	}
-
 	for {
+		if err := f(); err != nil {
+			exists := errs.Append(err)
+
+			switch err.(type) {
+			case expectedError:
+				// retry expected errors
+				if !exists && o.LogErrors {
+					log.Printf("retrying error: %s", err)
+				}
+			default:
+				return errs
+			}
+		} else {
+			return nil
+		}
+
 		select {
 		case <-timer.C:
-			return errs.Append(TimeoutError{})
+			errs.Append(TimeoutError{})
+
+			return errs
 		case <-t.StopChan():
 			return nil
 		case <-time.After(t.Tick()):
 		}
-
-		if err := f(); err != nil {
-			switch err.(type) {
-			case expectedError:
-				//nolint: errcheck
-				errs.Append(err)
-
-				continue
-			case unexpectedError:
-				return errs.Append(err)
-			}
-		}
-
-		return nil
 	}
 }
