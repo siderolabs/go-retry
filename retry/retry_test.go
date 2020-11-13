@@ -65,3 +65,29 @@ func Test_retry(t *testing.T) {
 		})
 	}
 }
+
+func Test_errors(t *testing.T) {
+	e := errors.New("xyz")
+
+	if !errors.Is(ExpectedError(e), e) {
+		t.Fatal("expected error should wrap errors")
+	}
+
+	if !errors.Is(UnexpectedError(e), e) {
+		t.Fatal("unexpected error should wrap errors")
+	}
+
+	errSet := ErrorSet{}
+	errSet.Append(e)
+
+	if !errors.Is(&errSet, e) {
+		t.Fatal("error set should wrap errors")
+	}
+
+	errSet = ErrorSet{}
+	errSet.Append(UnexpectedError(e))
+
+	if !errors.Is(&errSet, e) {
+		t.Fatal("error set should wrap errors")
+	}
+}

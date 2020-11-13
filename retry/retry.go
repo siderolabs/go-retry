@@ -6,6 +6,7 @@
 package retry
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"math/rand"
@@ -74,6 +75,14 @@ func (e *ErrorSet) Append(err error) bool {
 	return ok
 }
 
+// Is implements errors.Is.
+func (e *ErrorSet) Is(err error) bool {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	return len(e.errs) == 1 && errors.Is(e.errs[0], err)
+}
+
 // TimeoutError represents a timeout error.
 type TimeoutError struct{}
 
@@ -90,7 +99,15 @@ func IsTimeout(err error) bool {
 
 type expectedError struct{ error }
 
+func (e expectedError) Unwrap() error {
+	return e.error
+}
+
 type unexpectedError struct{ error }
+
+func (e unexpectedError) Unwrap() error {
+	return e.error
+}
 
 type retryer struct {
 	duration time.Duration
