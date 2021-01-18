@@ -6,6 +6,7 @@
 package retry
 
 import (
+	"context"
 	"errors"
 	"testing"
 	"time"
@@ -14,11 +15,17 @@ import (
 //nolint: scopelint
 func Test_retry(t *testing.T) {
 	type args struct {
-		f RetryableFunc
+		c context.Context
+		f RetryableFuncWithContext
 		d time.Duration
 		t Ticker
 		o *Options
 	}
+
+	canceledContext, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	var count int
 
 	tests := []struct {
 		name       string
@@ -28,7 +35,8 @@ func Test_retry(t *testing.T) {
 		{
 			name: "expected error string",
 			args: args{
-				f: func() error { return ExpectedError(errors.New("test")) },
+				c: context.Background(),
+				f: func(context.Context) error { return ExpectedError(errors.New("test")) },
 				d: 2 * time.Second,
 				t: NewConstantTicker(NewDefaultOptions()),
 				o: &Options{},
@@ -38,7 +46,8 @@ func Test_retry(t *testing.T) {
 		{
 			name: "unexpected error string",
 			args: args{
-				f: func() error { return UnexpectedError(errors.New("test")) },
+				c: context.Background(),
+				f: func(context.Context) error { return UnexpectedError(errors.New("test")) },
 				d: 2 * time.Second,
 				t: NewConstantTicker(NewDefaultOptions()),
 				o: &Options{},
@@ -48,18 +57,55 @@ func Test_retry(t *testing.T) {
 		{
 			name: "no error string",
 			args: args{
-				f: func() error { return nil },
+				c: context.Background(),
+				f: func(context.Context) error { return nil },
 				d: 2 * time.Second,
 				t: NewConstantTicker(NewDefaultOptions()),
 				o: &Options{},
 			},
 			wantString: "",
 		},
+		{
+			name: "context canceled",
+			args: args{
+				c: canceledContext,
+				f: func(ctx context.Context) error { return nil },
+				d: 2 * time.Second,
+				t: NewConstantTicker(NewDefaultOptions()),
+				o: &Options{},
+			},
+			wantString: "1 error(s) occurred:\n\tcontext canceled",
+		},
+		{
+			name: "limit attempt",
+			args: args{
+				c: context.Background(),
+				f: func(ctx context.Context) error {
+					count++
+
+					if count == 2 {
+						return nil
+					}
+
+					<-ctx.Done()
+
+					return ctx.Err()
+				},
+				d: 2 * time.Second,
+				t: NewConstantTicker(NewDefaultOptions()),
+				o: &Options{
+					AttemptTimeout: time.Millisecond,
+				},
+			},
+			wantString: "",
+		},
 	}
 
 	for _, tt := range tests {
+		count = 0
+
 		t.Run(tt.name, func(t *testing.T) {
-			if err := retry(tt.args.f, tt.args.d, tt.args.t, tt.args.o); err != nil && tt.wantString != err.Error() {
+			if err := retry(tt.args.c, tt.args.f, tt.args.d, tt.args.t, tt.args.o); err != nil && tt.wantString != err.Error() {
 				t.Errorf("retry() error = %q\nwant:\n%q", err, tt.wantString)
 			}
 		})

@@ -1,7 +1,7 @@
 ---
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2020-09-01T21:14:08Z by kres ee90a80-dirty.
+# Generated on 2021-01-18T14:11:16Z by kres latest.
 
 kind: pipeline
 type: kubernetes
@@ -132,7 +132,6 @@ services:
   - --dns=8.8.4.4
   - --mtu=1500
   - --log-level=error
-  - --insecure-registry=http://registry.ci.svc:5000
   privileged: true
   volumes:
   - name: outer-docker-socket

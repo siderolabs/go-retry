@@ -5,6 +5,7 @@
 package retry
 
 import (
+	"context"
 	"time"
 )
 
@@ -36,9 +37,8 @@ func Linear(duration time.Duration, setters ...Option) Retryer {
 func NewLinearTicker(opts *Options) *LinearTicker {
 	l := &LinearTicker{
 		ticker: ticker{
-			C:       make(chan time.Time, 1),
 			options: opts,
-			s:       make(chan struct{}, 1),
+			s:       make(chan struct{}),
 		},
 		c: 1,
 	}
@@ -48,10 +48,15 @@ func NewLinearTicker(opts *Options) *LinearTicker {
 
 // Retry implements the Retryer interface.
 func (l linearRetryer) Retry(f RetryableFunc) error {
+	return l.RetryWithContext(context.Background(), removeContext(f))
+}
+
+// RetryWithContext implements the Retryer interface.
+func (l linearRetryer) RetryWithContext(ctx context.Context, f RetryableFuncWithContext) error {
 	tick := NewLinearTicker(l.options)
 	defer tick.Stop()
 
-	return retry(f, l.duration, tick, l.options)
+	return retry(ctx, f, l.duration, tick, l.options)
 }
 
 // Tick implements the Ticker interface.
