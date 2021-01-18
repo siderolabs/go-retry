@@ -5,6 +5,7 @@
 package retry
 
 import (
+	"context"
 	"time"
 )
 
@@ -34,9 +35,8 @@ func Constant(duration time.Duration, setters ...Option) Retryer {
 func NewConstantTicker(opts *Options) *ConstantTicker {
 	l := &ConstantTicker{
 		ticker: ticker{
-			C:       make(chan time.Time, 1),
 			options: opts,
-			s:       make(chan struct{}, 1),
+			s:       make(chan struct{}),
 		},
 	}
 
@@ -45,10 +45,15 @@ func NewConstantTicker(opts *Options) *ConstantTicker {
 
 // Retry implements the Retryer interface.
 func (c constantRetryer) Retry(f RetryableFunc) error {
+	return c.RetryWithContext(context.Background(), removeContext(f))
+}
+
+// RetryWithContext implements the Retryer interface.
+func (c constantRetryer) RetryWithContext(ctx context.Context, f RetryableFuncWithContext) error {
 	tick := NewConstantTicker(c.options)
 	defer tick.Stop()
 
-	return retry(f, c.duration, tick, c.options)
+	return retry(ctx, f, c.duration, tick, c.options)
 }
 
 // Tick implements the Ticker interface.

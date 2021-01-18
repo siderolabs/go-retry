@@ -10,9 +10,10 @@ import (
 
 // Options is the functional options struct.
 type Options struct {
-	Units     time.Duration
-	Jitter    time.Duration
-	LogErrors bool
+	Units          time.Duration
+	Jitter         time.Duration
+	AttemptTimeout time.Duration
+	LogErrors      bool
 }
 
 // Option is the functional option func.
@@ -36,6 +37,13 @@ func WithJitter(o time.Duration) Option {
 func WithErrorLogging(enable bool) Option {
 	return func(args *Options) {
 		args.LogErrors = enable
+	}
+}
+
+// WithAttemptTimeout sets timeout for each retry attempt.
+func WithAttemptTimeout(o time.Duration) Option {
+	return func(args *Options) {
+		args.AttemptTimeout = o
 	}
 }
 

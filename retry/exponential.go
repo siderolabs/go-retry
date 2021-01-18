@@ -5,6 +5,7 @@
 package retry
 
 import (
+	"context"
 	"math"
 	"time"
 )
@@ -39,9 +40,8 @@ func Exponential(duration time.Duration, setters ...Option) Retryer {
 func NewExponentialTicker(opts *Options) *ExponentialTicker {
 	e := &ExponentialTicker{
 		ticker: ticker{
-			C:       make(chan time.Time, 1),
 			options: opts,
-			s:       make(chan struct{}, 1),
+			s:       make(chan struct{}),
 		},
 		c: 1.0,
 	}
@@ -51,10 +51,15 @@ func NewExponentialTicker(opts *Options) *ExponentialTicker {
 
 // Retry implements the Retryer interface.
 func (e exponentialRetryer) Retry(f RetryableFunc) error {
+	return e.RetryWithContext(context.Background(), removeContext(f))
+}
+
+// RetryWithContext implements the Retryer interface.
+func (e exponentialRetryer) RetryWithContext(ctx context.Context, f RetryableFuncWithContext) error {
 	tick := NewExponentialTicker(e.options)
 	defer tick.Stop()
 
-	return retry(f, e.duration, tick, e.options)
+	return retry(ctx, f, e.duration, tick, e.options)
 }
 
 // Tick implements the Ticker interface.

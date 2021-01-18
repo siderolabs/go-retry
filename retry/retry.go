@@ -6,6 +6,7 @@
 package retry
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -17,9 +18,19 @@ import (
 // RetryableFunc represents a function that can be retried.
 type RetryableFunc func() error
 
+// RetryableFuncWithContext represents a function that can be retried.
+type RetryableFuncWithContext func(context.Context) error
+
+func removeContext(f RetryableFunc) RetryableFuncWithContext {
+	return func(context.Context) error {
+		return f()
+	}
+}
+
 // Retryer defines the requirements for retrying a function.
 type Retryer interface {
 	Retry(RetryableFunc) error
+	RetryWithContext(context.Context, RetryableFuncWithContext) error
 }
 
 // Ticker defines the requirements for providing a clock to the retry logic.
@@ -92,9 +103,7 @@ func (TimeoutError) Error() string {
 
 // IsTimeout reutrns if the provided error is a timeout error.
 func IsTimeout(err error) bool {
-	_, ok := err.(TimeoutError)
-
-	return ok
+	return errors.Is(err, TimeoutError{})
 }
 
 type expectedError struct{ error }
@@ -115,7 +124,6 @@ type retryer struct {
 }
 
 type ticker struct {
-	C       chan time.Time
 	options *Options
 	rand    *rand.Rand
 	s       chan struct{}
@@ -138,7 +146,7 @@ func (t ticker) StopChan() <-chan struct{} {
 }
 
 func (t ticker) Stop() {
-	t.s <- struct{}{}
+	close(t.s)
 }
 
 // ExpectedError error represents an error that is expected by the retrying
@@ -161,37 +169,77 @@ func UnexpectedError(err error) error {
 	return unexpectedError{err}
 }
 
-func retry(f RetryableFunc, d time.Duration, t Ticker, o *Options) error {
-	timer := time.NewTimer(d)
-	defer timer.Stop()
+func retry(ctx context.Context, f RetryableFuncWithContext, d time.Duration, t Ticker, o *Options) error {
+	ctx, cancel := context.WithTimeout(ctx, d)
+	defer cancel()
 
 	errs := &ErrorSet{}
 
-	for {
-		if err := f(); err != nil {
-			exists := errs.Append(err)
+	var timer *time.Timer
 
-			switch err.(type) {
-			case expectedError:
-				// retry expected errors
-				if !exists && o.LogErrors {
-					log.Printf("retrying error: %s", err)
-				}
-			default:
-				return errs
+	defer func() {
+		if timer != nil {
+			timer.Stop()
+		}
+	}()
+
+	for {
+		err := func() error {
+			var attemptCtxCancel context.CancelFunc
+
+			attemptCtx := ctx
+
+			if o.AttemptTimeout != 0 {
+				attemptCtx, attemptCtxCancel = context.WithTimeout(attemptCtx, o.AttemptTimeout)
+				defer attemptCtxCancel()
 			}
-		} else {
+
+			return f(attemptCtx)
+		}()
+
+		if err == nil {
 			return nil
 		}
 
+		if errors.Is(err, context.DeadlineExceeded) {
+			err = TimeoutError{}
+
+			select {
+			case <-ctx.Done():
+			default:
+				// main context not canceled, continue retrying
+				err = ExpectedError(err)
+			}
+		}
+
+		exists := errs.Append(err)
+
+		var expError expectedError
+
+		if errors.As(err, &expError) {
+			// retry expected errors
+			if !exists && o.LogErrors {
+				log.Printf("retrying error: %s", err)
+			}
+		} else {
+			return errs
+		}
+
+		timer = time.NewTimer(t.Tick())
+
 		select {
-		case <-timer.C:
-			errs.Append(TimeoutError{})
+		case <-ctx.Done():
+			err := ctx.Err()
+			if errors.Is(err, context.DeadlineExceeded) {
+				err = TimeoutError{}
+			}
+
+			errs.Append(err)
 
 			return errs
 		case <-t.StopChan():
 			return nil
-		case <-time.After(t.Tick()):
+		case <-timer.C:
 		}
 	}
 }
