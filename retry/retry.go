@@ -161,6 +161,8 @@ func ExpectedError(err error) error {
 
 // UnexpectedError error represents an error that is unexpected by the retrying
 // function. This error is fatal.
+//
+// Deprecated: all errors are unexpected by default, just return them.
 func UnexpectedError(err error) error {
 	if err == nil {
 		return nil
