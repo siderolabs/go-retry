@@ -159,6 +159,11 @@ func ExpectedError(err error) error {
 	return expectedError{err}
 }
 
+// ExpectedErrorf makes an expected error from given format and arguments.
+func ExpectedErrorf(format string, a ...interface{}) error {
+	return ExpectedError(fmt.Errorf(format, a...))
+}
+
 // UnexpectedError error represents an error that is unexpected by the retrying
 // function. This error is fatal.
 //

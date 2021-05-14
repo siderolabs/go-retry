@@ -42,7 +42,7 @@ func Test_linearRetryer_Retry(t *testing.T) {
 				f: func() error {
 					count++
 
-					return ExpectedError(fmt.Errorf("expected"))
+					return ExpectedErrorf("expected")
 				},
 			},
 			expectedCount: 5,
@@ -60,7 +60,7 @@ func Test_linearRetryer_Retry(t *testing.T) {
 				f: func() error {
 					count++
 
-					return ExpectedError(fmt.Errorf("expected"))
+					return ExpectedErrorf("expected")
 				},
 			},
 			expectedCount: 9,
@@ -99,7 +99,7 @@ func Test_linearRetryer_Retry(t *testing.T) {
 						return fmt.Errorf("unexpected")
 					}
 
-					return ExpectedError(fmt.Errorf("unexpected"))
+					return ExpectedErrorf("unexpected")
 				},
 			},
 			expectedCount: 1,
@@ -120,7 +120,7 @@ func Test_linearRetryer_Retry(t *testing.T) {
 						return nil
 					}
 
-					return ExpectedError(fmt.Errorf("unexpected"))
+					return ExpectedErrorf("unexpected")
 				},
 			},
 			expectedCount: 2,
@@ -154,7 +154,7 @@ func Test_linearRetryer_Retry(t *testing.T) {
 				f: func() error {
 					count++
 
-					return ExpectedError(fmt.Errorf("expected"))
+					return ExpectedErrorf("expected")
 				},
 			},
 			expectedCount: 1,
