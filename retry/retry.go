@@ -101,7 +101,7 @@ func (TimeoutError) Error() string {
 	return "timeout"
 }
 
-// IsTimeout reutrns if the provided error is a timeout error.
+// IsTimeout returns if the provided error is a timeout error.
 func IsTimeout(err error) bool {
 	return errors.Is(err, TimeoutError{})
 }

@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-//nolint: testpackage
+//nolint:testpackage
 package retry
 
 import (
@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-//nolint: scopelint
+//nolint:scopelint
 func Test_retry(t *testing.T) {
 	type args struct {
 		c context.Context
@@ -113,6 +113,8 @@ func Test_retry(t *testing.T) {
 }
 
 func Test_errors(t *testing.T) {
+	t.Parallel()
+
 	e := errors.New("xyz")
 
 	if !errors.Is(ExpectedError(e), e) {

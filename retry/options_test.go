@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-//nolint: testpackage
+//nolint:testpackage
 package retry
 
 import (
@@ -11,8 +11,9 @@ import (
 	"time"
 )
 
-//nolint: scopelint
 func TestNewDefaultOptions(t *testing.T) {
+	t.Parallel()
+
 	type args struct {
 		setters []Option
 	}
@@ -43,7 +44,11 @@ func TestNewDefaultOptions(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
+
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			if got := NewDefaultOptions(tt.args.setters...); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("NewDefaultOptions() = %v, want %v", got, tt.want)
 			}
