@@ -47,7 +47,7 @@ func Test_retry(t *testing.T) {
 			name: "unexpected error string",
 			args: args{
 				c: context.Background(),
-				f: func(context.Context) error { return UnexpectedError(errors.New("test")) },
+				f: func(context.Context) error { return errors.New("test") },
 				d: 2 * time.Second,
 				t: NewConstantTicker(NewDefaultOptions()),
 				o: &Options{},

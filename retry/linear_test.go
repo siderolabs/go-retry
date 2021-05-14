@@ -78,7 +78,7 @@ func Test_linearRetryer_Retry(t *testing.T) {
 				f: func() error {
 					count++
 
-					return UnexpectedError(fmt.Errorf("unexpected"))
+					return fmt.Errorf("unexpected")
 				},
 			},
 			expectedCount: 1,
@@ -96,7 +96,7 @@ func Test_linearRetryer_Retry(t *testing.T) {
 				f: func() error {
 					count++
 					if count == 1 {
-						return UnexpectedError(fmt.Errorf("unexpected"))
+						return fmt.Errorf("unexpected")
 					}
 
 					return ExpectedError(fmt.Errorf("unexpected"))
