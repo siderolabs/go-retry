@@ -130,6 +130,12 @@ func Test_errors(t *testing.T) {
 		t.Fatal("error set should wrap errors")
 	}
 
+	errSet.Append(errors.New("foo"))
+
+	if !errors.Is(&errSet, e) {
+		t.Fatal("error set should wrap errors")
+	}
+
 	errSet = ErrorSet{}
 	errSet.Append(UnexpectedError(e))
 

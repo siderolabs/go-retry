@@ -91,7 +91,13 @@ func (e *ErrorSet) Is(err error) bool {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 
-	return len(e.errs) == 1 && errors.Is(e.errs[0], err)
+	for _, ee := range e.errs {
+		if errors.Is(ee, err) {
+			return true
+		}
+	}
+
+	return false
 }
 
 // TimeoutError represents a timeout error.
