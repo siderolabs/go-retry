@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-//nolint: testpackage
+//nolint:testpackage
 package retry
 
 import (
@@ -11,13 +11,13 @@ import (
 	"time"
 )
 
-//nolint: scopelint
+//nolint:scopelint
 func TestNewDefaultOptions(t *testing.T) {
 	type args struct {
 		setters []Option
 	}
 
-	tests := []struct {
+	tests := []struct { //nolint:govet
 		name string
 		args args
 		want *Options

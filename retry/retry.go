@@ -41,7 +41,7 @@ type Ticker interface {
 }
 
 // ErrorSet represents a set of unique errors.
-type ErrorSet struct {
+type ErrorSet struct { //nolint:errname
 	errs []error
 
 	mu sync.Mutex
@@ -125,8 +125,8 @@ func (e unexpectedError) Unwrap() error {
 }
 
 type retryer struct {
-	duration time.Duration
 	options  *Options
+	duration time.Duration
 }
 
 type ticker struct {

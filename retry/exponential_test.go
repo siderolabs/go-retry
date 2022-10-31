@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-//nolint: testpackage
+//nolint:testpackage
 package retry
 
 import (
@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-//nolint: scopelint
+//nolint:scopelint
 func Test_exponentialRetryer_Retry(t *testing.T) {
 	type fields struct {
 		retryer retryer
@@ -23,7 +23,7 @@ func Test_exponentialRetryer_Retry(t *testing.T) {
 
 	count := 0
 
-	tests := []struct {
+	tests := []struct { //nolint:govet
 		name          string
 		fields        fields
 		args          args
