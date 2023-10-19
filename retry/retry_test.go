@@ -112,6 +112,12 @@ func Test_retry(t *testing.T) {
 	}
 }
 
+type customError struct{}
+
+func (e customError) Error() string {
+	return "custom error"
+}
+
 func Test_errors(t *testing.T) {
 	e := errors.New("xyz")
 
@@ -125,6 +131,7 @@ func Test_errors(t *testing.T) {
 
 	errSet := ErrorSet{}
 	errSet.Append(e)
+	errSet.Append(customError{})
 
 	if !errors.Is(&errSet, e) {
 		t.Fatal("error set should wrap errors")
@@ -136,10 +143,20 @@ func Test_errors(t *testing.T) {
 		t.Fatal("error set should wrap errors")
 	}
 
+	var custom customError
+
+	if !errors.As(&errSet, &custom) {
+		t.Fatal("error set should wrap errors")
+	}
+
 	errSet = ErrorSet{}
 	errSet.Append(UnexpectedError(e))
 
 	if !errors.Is(&errSet, e) {
+		t.Fatal("error set should wrap errors")
+	}
+
+	if errors.As(&errSet, &custom) {
 		t.Fatal("error set should wrap errors")
 	}
 }

@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
+	"slices"
 	"sync"
 	"time"
 )
@@ -84,6 +85,28 @@ func (e *ErrorSet) Append(err error) bool {
 	}
 
 	return ok
+}
+
+// Unwrap implements errors.Unwrap.
+func (e *ErrorSet) Unwrap() []error {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	return slices.Clone(e.errs)
+}
+
+// As implements errors.As.
+func (e *ErrorSet) As(target any) bool {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	for _, ee := range e.errs {
+		if errors.As(ee, target) {
+			return true
+		}
+	}
+
+	return false
 }
 
 // Is implements errors.Is.
